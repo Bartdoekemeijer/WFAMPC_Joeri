@@ -1,8 +1,8 @@
 clear; clc; close all
 addpath WFSim\libraries\sparse_null
 addpath WFSim\bin\core                  % WFSim model directory
-addpath bin\core                        % WFAMPC directory
-%addpath bin\archive                     % WFAMPC directory (old needs to be replaced)
+addpath bin\core                            % WFAMPC directory
+%addpath bin\archive                        % WFAMPC directory (old needs to be replaced)
 
 Wp.name             = 'ThreeTurbine_Ampc';
 Wp.Turbulencemodel  = 'WFSim3';
@@ -10,17 +10,12 @@ Wp.Turbulencemodel  = 'WFSim3';
 %% Init
 WFAMPC_initialize
 
-
 %Wp           = meshingJW(showgrid,Wp,'lin');
 
 
 
 
 
-%% Iteration parameters
-conv_eps    =  1e-6;
-max_it      =  50;         % Only the first run to get to steady state
-max_it_dyn  =  1;
 
 
 
