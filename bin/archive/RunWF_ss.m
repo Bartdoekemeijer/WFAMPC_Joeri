@@ -80,13 +80,7 @@ for k=1:Np
         [du,dv,dp] = Updateboundaries(Wp,du,dv,dp);
         
     end
-    
-    if Check==1; Verification; end
-    if Animate==1; %Animation;
-        Animation_lin_vs_nonlinear
-    end
-    if Animate3D==1; Movie; end
-    
+        
     sol = field2sol(u,v,p,Wp);
     save((strcat('States/state',num2str(index),'_',num2str(k))),'derivatives','sol','u','v','p','du','dv','dp','uu','vv','pp');
     

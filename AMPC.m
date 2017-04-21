@@ -1,6 +1,6 @@
 clear; clc; close all
 addpath WFSim\libraries\sparse_null
-addpath WFSim\bin\core                  % WFSim model directory
+addpath WFSim\bin\core                      % WFSim model directory
 addpath bin\core                            % WFAMPC directory
 %addpath bin\archive                        % WFAMPC directory (old needs to be replaced)
 
@@ -10,16 +10,8 @@ Wp.Turbulencemodel  = 'WFSim3';
 %% Init
 WFAMPC_initialize
 
-%Wp           = meshingJW(showgrid,Wp,'lin');
 
-
-
-
-
-
-
-
-%% Control inputs
+%% Control inputs (has to go in initialize)
 b0              = 0.5;%[0.26;0.1;0.54];
 Phi             = zeros(Wp.N,Np);       % Yaw angles in degrees (-90 < Phi < 90 degrees)
 if length(b0) > 1
@@ -32,19 +24,12 @@ end
 dPhi            = zeros(Wp.N,Np);       % Yaw angles in degrees (-90 < Phi < 90 degrees), linear model
 dbeta           = 0*ones(Wp.N,Np);      % Scaled axial induction (0 < beta < 1), linear model
 phi             = zeros(Wp.N,Np);   	% Wind angles in degrees
-Power           = zeros(Wp.N,Np);       % Power turbines
 
-%% Start-up
-
-[B1,B2,Bm1,Bm2,bc] = Compute_B1_B2_bc(Wp,u_Inf);
-
-if Projection==1
-    [Qsp, Bsp] = Solution_space(B1,B2,bc);
-    solnew = Qsp\([vec(u(3:end-1,2:end-1)');vec(v(2:end-1,3:end-1)')]-Bsp); % Initial condition
+if Animate > 0
+    scrsz = get(0,'ScreenSize');
+    hfig = figure('color',[0 166/255 214/255],'units','normalized','outerposition',...
+           [0 0 1 1],'ToolBar','none','visible', 'on');
 end
-
-if Animate==1;scrsz = get(0,'ScreenSize');figure('color',[0 166/255 214/255],'Position',[50 50 floor(scrsz(3)/1.1) floor(scrsz(4)/1.1)],...
-        'ToolBar','none','visible', 'on');end
 
 %% Simulate Wind Farm towards Steady State
 
