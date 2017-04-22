@@ -10,21 +10,6 @@ Wp.Turbulencemodel  = 'WFSim3';
 %% Init
 WFAMPC_initialize
 
-
-%% Control inputs (has to go in initialize)
-b0              = 0.5;%[0.26;0.1;0.54];
-Phi             = zeros(Wp.N,Np);       % Yaw angles in degrees (-90 < Phi < 90 degrees)
-if length(b0) > 1
-    beta        = b0*ones(1,Np);        % Scaled axial induction 0 < beta < 1
-    beta0       = b0;
-else
-    beta        = b0*ones(Wp.N,Np);     % Scaled axial induction 0 < beta < 1
-    beta0       = b0*ones(Wp.N,1);
-end
-dPhi            = zeros(Wp.N,Np);       % Yaw angles in degrees (-90 < Phi < 90 degrees), linear model
-dbeta           = 0*ones(Wp.N,Np);      % Scaled axial induction (0 < beta < 1), linear model
-phi             = zeros(Wp.N,Np);   	% Wind angles in degrees
-
 if Animate > 0
     scrsz = get(0,'ScreenSize');
     hfig = figure('color',[0 166/255 214/255],'units','normalized','outerposition',...
@@ -32,59 +17,62 @@ if Animate > 0
 end
 
 %% Simulate Wind Farm towards Steady State
+index                   = 0;
+options.startUniform    = 1;    % Start from a uniform flowfield (true) or a steady-state solution (false)
+max_it                  = 50;  
 
-tic
-index = 0;
-RunWF_ss;  % index 1
-toc
+RunWFSim;                          % index 1 (go to steady state)
 
 %% First forward simulation + Backwards adjoint
+load((strcat('States/state',num2str(index),'_',num2str(options.AMPC.Nr))))
 
-load((strcat('States/state',num2str(index),'_',num2str(Nr))))
-% index = index + 1;
-tic
-RunWF % index 2
-toc
-tic
-[grad,labda,J_partial]   = get_adjoint_Nc(Np,Nc,sol,Wp,index);
-toc
-grad 	= gradproj(grad,beta,beta_lim,eps);
-dJmax   = max(max(abs(grad)))';
+options.startUniform    = 1;    % Start from a uniform flowfield (true) or a steady-state solution (false)
+max_it                  = 1;  
 
-%% Gradient calculation
+RunWFSim                        % index 2 (start from steady state)
 
-stop_ls         = 0;
-grad            = get_adjoint_Nc(Np,Nc,sol,Wp,index);
-dJmaxinit       = max(max(abs(grad)))';
-alphai          = 1/(dJmaxinit);
-alphai0         = alphai;
-BETA(:,1:Nr)    = beta(:,1:Nr);
-GRAD(:,1:Nr)    = grad(1:Nr,:)';
-POWER(:,1:Nr)   = Power(:,1:Nr);
-POWERTOT(:,1)   = sum(Power,2);
-J(1)            = sum(POWERTOT(:,1));
-P               = zeros(Nrmax,imax+1);
-P2              = zeros(Nrmax,imax+2);
-ALPHA           = [];
-dP_normi        = dP_norm*ones(1,Nrmax);
-constant        = 0;
+[grad,labda,J_partial]   = get_adjoint_Nc(options.AMPC,x,Wp,index);
+
+% This is temporarily, time and inputs need to be redefined in meshing
+for kk=1:options.AMPC.Nc  
+    beta(:,kk) = input{kk}.beta;
+end
+grad 	                 = gradproj(grad,beta,options.AMPC.beta_lim,eps);
+dJmax                    = max(max(abs(grad)))';
+
+%% Gradient calculation (Can this init not be done above, at least some can)
+stop_ls                     = 0;
+grad                        = get_adjoint_Nc(options.AMPC,x,Wp,index);
+dJmaxinit                   = max(max(abs(grad)))';
+alphai                      = 1/(dJmaxinit);
+alphai0                     = alphai;
+BETA(:,1:options.AMPC.Nr)   = beta(:,1:options.AMPC.Nr);
+GRAD(:,1:options.AMPC.Nr)   = grad(1:options.AMPC.Nr,:)';
+POWER(:,1:options.AMPC.Nr)  = Power(:,1:options.AMPC.Nr);
+POWERTOT(:,1)               = sum(Power,2);
+J(1)                        = sum(POWERTOT(:,1));
+P                           = zeros(options.AMPC.Nrmax,options.AMPC.imax+1);
+P2                          = zeros(options.AMPC.Nrmax,options.AMPC.imax+2);
+ALPHA                       = [];
+dP_normi                    = options.AMPC.dP_norm*ones(1,options.AMPC.Nrmax);
+constant                    = 0;
 
 index = 1;
     
-for i = 1:Nrmax
+for i = 1:options.AMPC.Nrmax
     
     % Forward simulation 1 -> Np
-    load((strcat('States/state',num2str(index),'_',num2str(Nr))))
+    load((strcat('States/state',num2str(index),'_',num2str(options.AMPC.Nr))))
     if constant == 0
-        beta        = [beta(:,Nr+1:end) beta(:,end)*ones(1,Nr)];
-        beta0       = beta(:,Nr);
+        beta        = [beta(:,options.AMPC.Nr+1:end) beta(:,end)*ones(1,options.AMPC.Nr)];
+        beta0       = beta(:,options.AMPC.Nr);
     end
     constant    = 0;
     indexNr     = index;
-    RunWF
+    RunWFSim
     
     % Backward adjoint Np -> 1
-    grad        = get_adjoint_Nc(Np,Nc,sol,Wp,index);
+    grad        = get_adjoint_Nc(options.AMPC,x,Wp,index);
 %     grad        = gradproj(grad,beta,beta_lim,eps);
     beta_prev   = beta;
     Power_prev  = Power;
@@ -104,7 +92,7 @@ for i = 1:Nrmax
         dP(1)       = dP_normi(1) + 1;
     end
     
-    while ls <= imax && ~(check1 && check2) && dP(i) > dP_normi(i)
+    while ls <= options.AMPC.imax && ~(check1 && check2) && dP(i) > dP_normi(i)
         
         beta_prev2  = beta;
         Power_prev2 = Power;
@@ -123,10 +111,10 @@ for i = 1:Nrmax
         ALPHA(length(ALPHA)+1) = alphai;
         
 %         beta    = update_beta_abs(beta_prev,grad,beta_lim,Nc,dbeta_max,alphai);
-        beta    = update_beta(beta_prev,grad,beta_lim,Nc,dbeta_max,alphai,beta0);
+        beta    = update_beta(beta_prev,grad,alphai,beta0,options);
 
-        load((strcat('States/state',num2str(indexNr),'_',num2str(Nr))))
-        RunWF
+        load((strcat('States/state',num2str(indexNr),'_',num2str(options.AMPC.Nr))))
+        RunWFSim
         ls          = ls + 1;
         P(i,ls)     = sum(sum(Power));
         P2(i,ls+1)  = P(i,ls);
@@ -142,11 +130,11 @@ for i = 1:Nrmax
     end
     
     if dP(i) < dP_normi(i)
-%         beta        = beta(:,1)*ones(1,Np);
-        beta(:,1:Nr)    = beta(:,1)*ones(1,Nr);
+%         beta        = beta(:,1)*ones(1,option.AMPC.Np);
+        beta(:,1:options.AMPC.Nr)    = beta(:,1)*ones(1,options.AMPC.Nr);
 %         dP_normi(i+1)   = dP_norm*2;
-        load((strcat('States/state',num2str(indexNr),'_',num2str(Nr))))
-        RunWF
+        load((strcat('States/state',num2str(indexNr),'_',num2str(options.AMPC.Nr))))
+        RunWFSim
         P(i,2)      = sum(sum(Power));
         P2(i,3)     = P(i,2);
         constant    = 1;
@@ -164,56 +152,38 @@ for i = 1:Nrmax
     end
     
     % Save intermediate results
-    BETA(:,1+Nr*(i-1):Nr*i)     = beta(:,1:Nr);
-    GRAD(:,1+Nr*(i-1):Nr*i)     = grad(1:Nr,:)';
-    POWER(:,1+Nr*(i-1):Nr*i)    = Power(:,1:Nr);
-    POWERTOT(:,i)               = sum(Power,2);
-    J(i)                        = sum(POWERTOT(:,i));
+    BETA(:,1+options.AMPC.Nr*(i-1):options.AMPC.Nr*i)   = beta(:,1:options.AMPC.Nr);
+    GRAD(:,1+options.AMPC.Nr*(i-1):options.AMPC.Nr*i)   = grad(1:options.AMPC.Nr,:)';
+    POWER(:,1+options.AMPC.Nr*(i-1):options.AMPC.Nr*i)  = Power(:,1:options.AMPC.Nr);
+    POWERTOT(:,i)                                       = sum(Power,2);
+    J(i)                                                = sum(POWERTOT(:,i));
     
-    if ShowGrad == 1
+    if options.AMPC.ShowGrad == 1
         figure;
         plot(grad);
         figure;
         plot(beta');
     end
     
-    if ChangeDir == 1 && i == round(Nrmax/2)
-        v_Inf   = u_Inf*sin(angleDir);
-        u_Inf   = u_Inf*cos(angleDir);
-        [B1,B2,Bm1,Bm2,bc] = Compute_B1_B2_bc(Wp,u_Inf);
-        if Projection==1
-            [Qsp, Bsp] = Solution_space(B1,B2,bc);
-            solnew = Qsp\([vec(u(3:end-1,2:end-1)');vec(v(2:end-1,3:end-1)')]-Bsp); % Initial condition
-        end
-        if Animate==1;scrsz = get(0,'ScreenSize');figure('color',[0 166/255 214/255],'Position',[50 50 floor(scrsz(3)/1.1) floor(scrsz(4)/1.1)],...
-                'ToolBar','none','visible', 'on');end
-    end
-    
-    if ChangeSpeed == 1 && i == round(Nrmax/2)
-        u_Inf   = 10;
-        [B1,B2,Bm1,Bm2,bc] = Compute_B1_B2_bc(Wp,u_Inf);
-        if Projection==1
-            [Qsp, Bsp] = Solution_space(B1,B2,bc);
-            solnew = Qsp\([vec(u(3:end-1,2:end-1)');vec(v(2:end-1,3:end-1)')]-Bsp); % Initial condition
-        end
-        if Animate==1;scrsz = get(0,'ScreenSize');figure('color',[0 166/255 214/255],'Position',[50 50 floor(scrsz(3)/1.1) floor(scrsz(4)/1.1)],...
-                'ToolBar','none','visible', 'on');end
-    end
-    
+
 end
     
 %% Figures: opmaak verbeteren!
+h           = Wp.sim.h;
+Nrmax       = options.AMPC.Nrmax;
+Nr          = options.AMPC.Nr;
+angleDir    = Wp.AMPC.angleDir;
 
 figure;hold on;plot(h:h:h*Nrmax*Nr,POWER')
 plot(h:h:h*Nrmax*Nr,sum(POWER))
 if ChangeSpeed == 1
-    load(strcat('greedypower',num2str(Wp.N),'T_u8_u10'))
+    load(strcat('greedypower',num2str(Wp.turbine.N),'T_u8_u10'))
     plot(h:h:h*Nrmax*Nr,greedyP_u8_u10,'--')
 elseif ChangeDir == 1
-    load(strcat('greedypower',num2str(Wp.N),'T',num2str(angleDir*180/pi)))
+    load(strcat('greedypower',num2str(Wp.turbine.N),'T',num2str(angleDir*180/pi)))
     plot(h:h:h*Nrmax*Nr,greedyP,'--')
 else
-    load(strcat('greedypower',num2str(Wp.N),'T'))
+    load(strcat('greedypower',num2str(Wp.turbine.N),'T'))
     plot(h:h:h*Nrmax*Nr,greedyP_u8*ones(1,Nrmax*Nr),'--')
 %     plot(h:h:h*Nrmax*Nr,[greedyP_u8*ones(1,round(Nrmax/2)*Nr) greedyP_u10*ones(1,round(Nrmax/2)*Nr)],'--')
 end
