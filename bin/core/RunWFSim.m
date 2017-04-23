@@ -1,6 +1,6 @@
 index                   = index + 1;
 
-for k=1:options.AMPC.Np
+for k=1:options.AMPC.Np-1
     it        = 0;
     eps       = 1e19;
     epss      = 1e20;
