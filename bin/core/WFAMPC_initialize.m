@@ -24,8 +24,8 @@ options.AMPC.method       = 'grad_ratio';        % Control method used
 
 options.AMPC.beta_lim        = [0.1;0.9];        % Limits of input beta
 options.AMPC.dbeta_max       = 0.1;              % Limit on change of beta per time step
-options.AMPC.Np              = 201;              % Prediction Horizon (in time steps)
-options.AMPC.Nc              = 201;              % Control horizon (in time steps)
+options.AMPC.Np              = 200;              % Prediction Horizon (in time steps)
+options.AMPC.Nc              = 200;              % Control horizon (in time steps)
 options.AMPC.Nr              = 10;               % Receding horizon (in time steps)
 options.AMPC.gamma           = 5e-7;             % For Steepest-descent method
 options.AMPC.imax            = 10;               % Max number of iterations within timestep
