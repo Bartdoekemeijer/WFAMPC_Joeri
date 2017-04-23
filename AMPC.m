@@ -37,6 +37,7 @@ RunWFSim                        % index 2 (start from steady state)
 for kk=1:options.AMPC.Nc  
     beta(:,kk) = input{kk}.beta;
 end
+
 grad 	                 = gradproj(grad,beta,options.AMPC.beta_lim,eps);
 dJmax                    = max(max(abs(grad)))';
 
@@ -67,6 +68,12 @@ for i = 1:options.AMPC.Nrmax
         beta        = [beta(:,options.AMPC.Nr+1:end) beta(:,end)*ones(1,options.AMPC.Nr)];
         beta0       = beta(:,options.AMPC.Nr);
     end
+    
+    % Write here an update of input.beta
+    for kk=1:size(beta,2)
+        input{kk}.beta = beta(:,kk);
+    end
+    
     constant    = 0;
     indexNr     = index;
     RunWFSim
@@ -112,7 +119,12 @@ for i = 1:options.AMPC.Nrmax
         
 %         beta    = update_beta_abs(beta_prev,grad,beta_lim,Nc,dbeta_max,alphai);
         beta    = update_beta(beta_prev,grad,alphai,beta0,options);
-
+        
+        % Write here an update of input.beta
+        for kk=1:size(beta,2)
+            input{kk}.beta = beta(:,kk);
+        end
+        
         load((strcat('states/state',num2str(indexNr),'_',num2str(options.AMPC.Nr))))
         RunWFSim
         ls          = ls + 1;
@@ -132,7 +144,12 @@ for i = 1:options.AMPC.Nrmax
     if dP(i) < dP_normi(i)
 %         beta        = beta(:,1)*ones(1,option.AMPC.Np);
         beta(:,1:options.AMPC.Nr)    = beta(:,1)*ones(1,options.AMPC.Nr);
-%         dP_normi(i+1)   = dP_norm*2;
+        % Write here an update of input.beta
+        for kk=1:size(beta,2)
+            input{kk}.beta = beta(:,kk);
+        end
+        
+        %         dP_normi(i+1)   = dP_norm*2;
         load((strcat('states/state',num2str(indexNr),'_',num2str(options.AMPC.Nr))))
         RunWFSim
         P(i,2)      = sum(sum(Power));
@@ -142,11 +159,21 @@ for i = 1:options.AMPC.Nrmax
         display(['i =',num2str(i),', constant Power, Cost J =',num2str(P(i,1),'%10.4e')]);
     elseif P(i,ls) < P(i,ls-1) && P(i,ls-1) > P(i,1)
         beta    = beta_prev2;
+        % Write here an update of input.beta
+        for kk=1:size(beta,2)
+            input{kk}.beta = beta(:,kk);
+        end
+        
         Power   = Power_prev2;
         index   = index-1;
         stopls  = 1;
     elseif P(i,ls) < P(i,1)
         beta    = beta_prev;
+        % Write here an update of input.beta
+        for kk=1:size(beta,2)
+            input{kk}.beta = beta(:,kk);
+        end
+        
         Power   = Power_prev;
         index   = indexNr;
     end
@@ -172,7 +199,9 @@ end
 h           = Wp.sim.h;
 Nrmax       = options.AMPC.Nrmax;
 Nr          = options.AMPC.Nr;
-angleDir    = Wp.AMPC.angleDir;
+angleDir    = 0;
+ChangeSpeed = 0;
+ChangeDir   = 0;
 
 figure;hold on;plot(h:h:h*Nrmax*Nr,POWER')
 plot(h:h:h*Nrmax*Nr,sum(POWER))
