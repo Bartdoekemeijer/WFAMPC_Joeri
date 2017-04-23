@@ -24,7 +24,7 @@ max_it                  = 50;
 RunWFSim;                          % index 1 (go to steady state)
 
 %% First forward simulation + Backwards adjoint
-load((strcat('states/state',num2str(index),'_',num2str(options.AMPC.Nr))))
+load((strcat('data_WFAMpc/states/state',num2str(index),'_',num2str(options.AMPC.Nr))))
 
 options.startUniform    = 1;    % Start from a uniform flowfield (true) or a steady-state solution (false)
 max_it                  = 1;  
@@ -63,7 +63,7 @@ index = 1;
 for i = 1:options.AMPC.Nrmax
     
     % Forward simulation 1 -> Np
-    load((strcat('states/state',num2str(index),'_',num2str(options.AMPC.Nr))))
+    load((strcat('data_WFAMpc/states/state',num2str(index),'_',num2str(options.AMPC.Nr))))
     if constant == 0
         beta        = [beta(:,options.AMPC.Nr+1:end) beta(:,end)*ones(1,options.AMPC.Nr)];
         beta0       = beta(:,options.AMPC.Nr);
@@ -125,7 +125,7 @@ for i = 1:options.AMPC.Nrmax
             input{kk}.beta = beta(:,kk);
         end
         
-        load((strcat('states/state',num2str(indexNr),'_',num2str(options.AMPC.Nr))))
+        load((strcat('data_WFAMpc/states/state',num2str(indexNr),'_',num2str(options.AMPC.Nr))))
         RunWFSim
         ls          = ls + 1;
         P(i,ls)     = sum(sum(Power));
@@ -150,7 +150,7 @@ for i = 1:options.AMPC.Nrmax
         end
         
         %         dP_normi(i+1)   = dP_norm*2;
-        load((strcat('states/state',num2str(indexNr),'_',num2str(options.AMPC.Nr))))
+        load((strcat('data_WFAMpc/states/state',num2str(indexNr),'_',num2str(options.AMPC.Nr))))
         RunWFSim
         P(i,2)      = sum(sum(Power));
         P2(i,3)     = P(i,2);
@@ -192,30 +192,19 @@ for i = 1:options.AMPC.Nrmax
         plot(beta');
     end
     
-
 end
     
 %% Figures: opmaak verbeteren!
 h           = Wp.sim.h;
 Nrmax       = options.AMPC.Nrmax;
 Nr          = options.AMPC.Nr;
-angleDir    = 0;
-ChangeSpeed = 0;
-ChangeDir   = 0;
 
 figure;hold on;plot(h:h:h*Nrmax*Nr,POWER')
 plot(h:h:h*Nrmax*Nr,sum(POWER))
-if ChangeSpeed == 1
-    load(strcat('greedypower',num2str(Wp.turbine.N),'T_u8_u10'))
-    plot(h:h:h*Nrmax*Nr,greedyP_u8_u10,'--')
-elseif ChangeDir == 1
-    load(strcat('greedypower',num2str(Wp.turbine.N),'T',num2str(angleDir*180/pi)))
-    plot(h:h:h*Nrmax*Nr,greedyP,'--')
-else
-    load(strcat('greedypower',num2str(Wp.turbine.N),'T'))
-    plot(h:h:h*Nrmax*Nr,greedyP_u8*ones(1,Nrmax*Nr),'--')
-%     plot(h:h:h*Nrmax*Nr,[greedyP_u8*ones(1,round(Nrmax/2)*Nr) greedyP_u10*ones(1,round(Nrmax/2)*Nr)],'--')
-end
+
+load(strcat('data_WFAMpc/greedypower',num2str(Wp.turbine.N),'T'))
+plot(h:h:h*Nrmax*Nr,greedyP_u8*ones(1,Nrmax*Nr),'--')
+
 grid on
 xlabel('Time [s]')
 ylabel('Power [W]')
@@ -241,4 +230,4 @@ ylabel('Power [W]')
 legend('Turbine 1','Turbine 2','Turbine 3','Total power')
 grid on
 
-delete('states/*.mat')
+delete('data_WFAMpc/states/*.mat')
