@@ -22,5 +22,5 @@ for k=1:options.AMPC.Np
     
     derivatives = sys.derivatives;
     x           = sol.x;
-    save((strcat('States/state',num2str(index),'_',num2str(k))),'sys','x');    
+    save((strcat('states/state',num2str(index),'_',num2str(k))),'sys','x');    
 end;

@@ -24,7 +24,7 @@ max_it                  = 50;
 RunWFSim;                          % index 1 (go to steady state)
 
 %% First forward simulation + Backwards adjoint
-load((strcat('States/state',num2str(index),'_',num2str(options.AMPC.Nr))))
+load((strcat('states/state',num2str(index),'_',num2str(options.AMPC.Nr))))
 
 options.startUniform    = 1;    % Start from a uniform flowfield (true) or a steady-state solution (false)
 max_it                  = 1;  
@@ -62,7 +62,7 @@ index = 1;
 for i = 1:options.AMPC.Nrmax
     
     % Forward simulation 1 -> Np
-    load((strcat('States/state',num2str(index),'_',num2str(options.AMPC.Nr))))
+    load((strcat('states/state',num2str(index),'_',num2str(options.AMPC.Nr))))
     if constant == 0
         beta        = [beta(:,options.AMPC.Nr+1:end) beta(:,end)*ones(1,options.AMPC.Nr)];
         beta0       = beta(:,options.AMPC.Nr);
@@ -113,7 +113,7 @@ for i = 1:options.AMPC.Nrmax
 %         beta    = update_beta_abs(beta_prev,grad,beta_lim,Nc,dbeta_max,alphai);
         beta    = update_beta(beta_prev,grad,alphai,beta0,options);
 
-        load((strcat('States/state',num2str(indexNr),'_',num2str(options.AMPC.Nr))))
+        load((strcat('states/state',num2str(indexNr),'_',num2str(options.AMPC.Nr))))
         RunWFSim
         ls          = ls + 1;
         P(i,ls)     = sum(sum(Power));
@@ -133,7 +133,7 @@ for i = 1:options.AMPC.Nrmax
 %         beta        = beta(:,1)*ones(1,option.AMPC.Np);
         beta(:,1:options.AMPC.Nr)    = beta(:,1)*ones(1,options.AMPC.Nr);
 %         dP_normi(i+1)   = dP_norm*2;
-        load((strcat('States/state',num2str(indexNr),'_',num2str(options.AMPC.Nr))))
+        load((strcat('states/state',num2str(indexNr),'_',num2str(options.AMPC.Nr))))
         RunWFSim
         P(i,2)      = sum(sum(Power));
         P2(i,3)     = P(i,2);
@@ -212,4 +212,4 @@ ylabel('Power [W]')
 legend('Turbine 1','Turbine 2','Turbine 3','Total power')
 grid on
 
-delete('States/*.mat')
+delete('states/*.mat')
