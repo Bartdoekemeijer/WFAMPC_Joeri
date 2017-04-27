@@ -12,7 +12,7 @@ betas   = betas-((beta_lim(2)-betas).*(s==-1)+...
             (betas-beta_lim(1)).*(s==1)).*dJ*alphai;
         
 % s.t. constraint
-if nargin > 5
+%if nargin > 5
 %     betas   = [betas(:,1) betas];
     betas   = [beta0 betas];
     for i = 1:Nc
@@ -22,7 +22,7 @@ if nargin > 5
                             (abs(dbeta)<=dbeta_max).*betas(:,i+1);
     end
     betas = betas(:,2:end);
-end
+%end
 
 beta    = [betas betas(:,end)*ones(1,length(beta)-Nc)];
 beta    = betalim(beta,beta_lim,dbeta_max);

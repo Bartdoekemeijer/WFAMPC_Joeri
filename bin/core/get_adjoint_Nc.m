@@ -12,7 +12,7 @@ tic
 for n = Np:-1:1
     % Note: m = n - 1 // o = n + 1
     
-    load(strcat('states/state',num2str(index),'_',num2str(n),'.mat'));
+    load(strcat('data_WFAMpc/states/state',num2str(index),'_',num2str(n),'.mat'));
     Cn_xn           = sys.A;
     Cn_xm           = sys.derivatives.dAdx - sys.derivatives.dSmdx ...
                         - sys.derivatives.Q - sys.derivatives.dBc;

@@ -202,13 +202,11 @@ Nr          = options.AMPC.Nr;
 figure;hold on;plot(h:h:h*Nrmax*Nr,POWER')
 plot(h:h:h*Nrmax*Nr,sum(POWER))
 
-load(strcat('data_WFAMpc/greedypower',num2str(Wp.turbine.N),'T'))
-plot(h:h:h*Nrmax*Nr,greedyP_u8*ones(1,Nrmax*Nr),'--')
 
 grid on
 xlabel('Time [s]')
 ylabel('Power [W]')
-legend('Turbine 1','Turbine 2','Turbine 3','Total power','Greedy control power')
+legend('Turbine 1','Turbine 2','Turbine 3','Total power')
 
 figure;hold on;plot(h:h:h*Nrmax*Nr,BETA')
 plot(h:h:h*Nrmax*Nr,[0.26;0.1;0.54]*ones(1,Nrmax*Nr),'--')

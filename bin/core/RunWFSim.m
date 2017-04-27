@@ -14,7 +14,7 @@ for k=1:options.AMPC.Np
         end
         
         [sys,Power(:,k),Ueffect(:,k),a(:,k),CT(:,k)] = ...
-            Make_Ax_b(Wp,sys,sol,input{k},B1,B2,bc,k,options);              % Create system matrices
+            Make_Ax_b(Wp,sys,sol,input{k},B1,B2,bc,k,options);                      % Create system matrices
         [sol,sys] = Computesol(sys,input{k},sol,k,it,options);                      % Compute solution
         [sol,eps] = MapSolution(Wp.mesh.Nx,Wp.mesh.Ny,sol,k,it,options);            % Map solution to field
         
@@ -22,5 +22,5 @@ for k=1:options.AMPC.Np
     
     derivatives = sys.derivatives;
     x           = sol.x;
-    save((strcat('states/state',num2str(index),'_',num2str(k))),'sys','x');    
+    save((strcat('data_WFAMpc/states/state',num2str(index),'_',num2str(k))),'sys','x');    
 end;
